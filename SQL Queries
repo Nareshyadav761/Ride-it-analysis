@@ -1,0 +1,93 @@
+/*
+   1️. Executive Summary — Overall Performance KPIs
+*/
+SELECT
+    COUNT(DISTINCT d.id_driver) AS Active_Drivers,
+    SUM(a.offers) AS Total_Offers,
+    SUM(a.bookings) AS Total_Bookings,
+    SUM(a.rides) AS Total_Rides,
+    SUM(a.bookings_cancelled_by_passenger + a.bookings_cancelled_by_driver) AS Total_Cancellations,
+    ROUND(AVG(d.driver_rating), 2) AS Avg_Driver_Rating,
+    ROUND(SUM(a.rides) * 100.0 / SUM(a.bookings), 2) AS Ride_Completion_Rate
+FROM drivers d
+JOIN activity a ON d.id_driver = a.id_driver;
+
+/* 
+   2️. Cancellation Breakdown — Passenger vs Driver
+*/
+SELECT
+    a.active_date,
+    SUM(a.bookings_cancelled_by_passenger) AS Cancels_By_Passenger,
+    SUM(a.bookings_cancelled_by_driver) AS Cancels_By_Driver,
+    SUM(a.bookings_cancelled_by_passenger + a.bookings_cancelled_by_driver) AS Total_Cancellations
+FROM activity a
+GROUP BY a.active_date
+ORDER BY a.active_date;
+
+/*
+   3️. Cancellation Rate by Service Type (Taxi vs PHV)
+*/
+SELECT
+    d.service_type,
+    SUM(a.bookings) AS Total_Bookings,
+    SUM(a.bookings_cancelled_by_passenger + a.bookings_cancelled_by_driver) AS Total_Cancellations,
+    ROUND(SUM(a.bookings_cancelled_by_passenger + a.bookings_cancelled_by_driver) * 100.0 / SUM(a.bookings), 2) AS Cancellation_Rate_Percent
+FROM drivers d
+JOIN activity a ON d.id_driver = a.id_driver
+GROUP BY d.service_type
+ORDER BY Cancellation_Rate_Percent DESC;
+
+/*
+   4️. Regional Performance — Country-Level Metrics
+*/
+SELECT
+    d.country_code,
+    COUNT(DISTINCT d.id_driver) AS Active_Drivers,
+    SUM(a.rides) AS Total_Rides,
+    SUM(a.bookings) AS Total_Bookings,
+    SUM(a.offers) AS Total_Offers,
+    ROUND(AVG(d.driver_rating), 2) AS Avg_Rating
+FROM drivers d
+JOIN activity a ON d.id_driver = a.id_driver
+GROUP BY d.country_code
+ORDER BY Total_Rides DESC;
+
+/*
+   5️. Driver Performance — Top & Bottom Drivers
+*/
+SELECT
+    d.id_driver,
+    d.driver_rating,
+    SUM(a.rides) AS Total_Rides,
+    SUM(a.bookings) AS Total_Bookings,
+    SUM(a.offers) AS Total_Offers,
+    SUM(a.bookings_cancelled_by_driver) AS Driver_Cancellations
+FROM drivers d
+JOIN activity a ON d.id_driver = a.id_driver
+GROUP BY d.id_driver, d.driver_rating
+ORDER BY Total_Rides DESC;
+
+/*
+   6️. Gold-Level Drivers — High-Performance Segment
+*/
+SELECT
+    d.gold_level_count,
+    ROUND(AVG(d.driver_rating), 2) AS Avg_Rating,
+    SUM(a.rides) AS Total_Rides
+FROM drivers d
+JOIN activity a ON d.id_driver = a.id_driver
+GROUP BY d.gold_level_count
+ORDER BY Total_Rides DESC;
+
+/*
+   7️. Daily Demand Trends — Offers, Bookings, and Rides
+*/
+SELECT
+    a.active_date,
+    SUM(a.offers) AS Total_Offers,
+    SUM(a.bookings) AS Total_Bookings,
+    SUM(a.rides) AS Total_Rides
+FROM activity a
+GROUP BY a.active_date
+ORDER BY a.active_date;
+
